@@ -12,6 +12,9 @@ Thumbs.db
 # ===== Material privado del proceso (no publicar) =====
 Prueba Desarrollador PHP.pdf
 
+# ===== Documentación de trabajo interna (no publicar) =====
+/docs/
+
 # ===== Backend (Laravel / PHP) =====
 /backend/vendor/
 /backend/node_modules/

@@ -14,9 +14,8 @@ Aplicación **desacoplada** (front y back independientes, comunicados vía API R
 
 ```
 .
-├── backend/      # API Laravel (se crea en la Fase 1)
-├── frontend/     # SPA React  (se crea en la Fase 4)
-├── docs/         # Documentación: misión/plan, diagramas UML, dump de BD
+├── backend/      # API Laravel (PostgreSQL)
+├── frontend/     # SPA React (Vite)
 └── README.md     # Este archivo
 ```
 
@@ -41,9 +40,4 @@ Aplicación **desacoplada** (front y back independientes, comunicados vía API R
 ## 🚀 Cómo ejecutar
 
 > ⏳ _Pendiente — se documentará el paso a paso de instalación y despliegue conforme avancen
-> las fases (ver `docs/MISION.md`)._
-
-## 📋 Plan del proyecto
-
-El plan completo por fases, las reglas de negocio y los criterios de aceptación están en
-[`docs/MISION.md`](docs/MISION.md).
+> las fases._
