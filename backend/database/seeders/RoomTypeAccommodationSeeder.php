@@ -22,8 +22,8 @@ class RoomTypeAccommodationSeeder extends Seeder
     {
         $rules = [
             'Estándar' => ['Sencilla', 'Doble'],
-            'Junior'   => ['Triple', 'Cuádruple'],
-            'Suite'    => ['Sencilla', 'Doble', 'Triple'],
+            'Junior' => ['Triple', 'Cuádruple'],
+            'Suite' => ['Sencilla', 'Doble', 'Triple'],
         ];
 
         foreach ($rules as $roomTypeName => $accommodationNames) {
