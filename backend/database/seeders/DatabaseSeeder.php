@@ -2,24 +2,24 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+/**
+ * Carga los catálogos base del sistema. El orden importa: las combinaciones
+ * válidas (RoomTypeAccommodationSeeder) dependen de tipos y acomodaciones.
+ */
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            CitySeeder::class,
+            RoomTypeSeeder::class,
+            AccommodationSeeder::class,
+            RoomTypeAccommodationSeeder::class,
         ]);
     }
 }
