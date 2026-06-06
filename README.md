@@ -1,5 +1,7 @@
 # Prueba Técnica — Sistema de Hoteles Decameron
 
+[![CI](https://github.com/elkin487/prueba_tecnica/actions/workflows/ci.yml/badge.svg)](https://github.com/elkin487/prueba_tecnica/actions/workflows/ci.yml)
+
 Sistema web para registrar hoteles de la compañía y configurarles tipos de habitación con
 sus acomodaciones, aplicando validaciones de negocio. Desarrollado como prueba técnica.
 

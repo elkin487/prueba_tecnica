@@ -1,0 +1,117 @@
+name: CI
+
+# Integración Continua del monorepo: valida backend (Laravel) y frontend (React)
+# en cada push y pull request hacia main. El merge no se hace con el pipeline en rojo.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancela ejecuciones previas en curso de la misma rama/PR para no malgastar minutos.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Backend — Laravel: estilo (Pint) + pruebas (PHPUnit) contra PostgreSQL real.
+  # ---------------------------------------------------------------------------
+  backend:
+    name: Backend (Laravel)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    # Servicio PostgreSQL efímero. Auth "trust" para conectar sin contraseña,
+    # coincidiendo con la configuración de phpunit.xml (DB_PASSWORD vacío).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: prueba_tecnica_testing
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo, pdo_pgsql, pgsql, mbstring, bcmath
+          coverage: none
+
+      - name: Caché de dependencias de Composer
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Instalar dependencias
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Preparar entorno
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Verificar estilo de código (Pint)
+        run: ./vendor/bin/pint --test
+
+      - name: Ejecutar pruebas (PHPUnit)
+        run: php artisan test
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: prueba_tecnica_testing
+          DB_USERNAME: postgres
+          DB_PASSWORD: ''
+
+  # ---------------------------------------------------------------------------
+  # Frontend — React/Vite: lint (ESLint) + pruebas (Vitest) + build de producción.
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: Frontend (React)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar lint (ESLint)
+        run: npm run lint
+
+      - name: Ejecutar pruebas (Vitest)
+        run: npm run test
+
+      - name: Compilar build de producción
+        run: npm run build
