@@ -6,7 +6,7 @@ Sistema web para registrar los hoteles de la compañía y configurarles tipos de
 habitación con sus acomodaciones, aplicando validaciones de negocio. Desarrollado
 como prueba técnica.
 
-> 🌐 **Aplicación desplegada:** _pendiente (se publicará el enlace tras el despliegue)._
+> 🌐 **Aplicación desplegada:** **https://prueba-tecnica.inufit.store**
 
 ## 🏗️ Arquitectura
 
@@ -195,5 +195,65 @@ Todas las validaciones son autoritativas en el backend. Detalle en
 
 ## ☁️ Despliegue
 
-> ⏳ _Pendiente._ La guía de despliegue en DigitalOcean y el enlace público se
-> documentarán al cerrar la fase de despliegue.
+La aplicación está desplegada en un servidor **Ubuntu** (DigitalOcean) con
+**nginx + PHP-FPM 8.4 + PostgreSQL** y HTTPS vía **Let's Encrypt**:
+
+🔗 **https://prueba-tecnica.inufit.store**
+
+### Cómo se desplegó (reproducible)
+
+1. **Código** — clonar el repositorio en el servidor:
+   ```bash
+   git clone https://github.com/elkin487/prueba_tecnica.git /var/www/decameron
+   ```
+2. **Base de datos** — crear BD y usuario dedicados en PostgreSQL:
+   ```sql
+   CREATE USER prueba_tecnica_user WITH PASSWORD '••••••';
+   CREATE DATABASE prueba_tecnica OWNER prueba_tecnica_user;
+   ```
+3. **Backend**:
+   ```bash
+   cd /var/www/decameron/backend
+   composer install --no-dev --optimize-autoloader
+   cp .env.example .env     # APP_ENV=production, APP_URL=https://prueba-tecnica.inufit.store + credenciales pgsql
+   php artisan key:generate
+   php artisan migrate --seed
+   php artisan config:cache
+   chown -R www-data:www-data .
+   ```
+4. **Frontend** — se compila **en local** y se sube `dist/` al servidor (así no se
+   consume RAM compilando en el server):
+   ```bash
+   # en tu máquina:
+   cd frontend && VITE_API_URL=/api npm run build
+   rsync -az dist/ root@SERVIDOR:/var/www/decameron/frontend/dist/
+   ```
+5. **nginx** — un server block sirve el SPA estático y enruta `/api` al
+   front-controller de Laravel por PHP-FPM:
+   ```nginx
+   server {
+       server_name prueba-tecnica.inufit.store;
+       root /var/www/decameron/frontend/dist;
+       index index.html;
+
+       location ^~ /api/ {
+           include fastcgi_params;
+           fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+           fastcgi_param SCRIPT_FILENAME /var/www/decameron/backend/public/index.php;
+           fastcgi_param SCRIPT_NAME /index.php;
+       }
+       location / { try_files $uri $uri/ /index.html; }   # SPA fallback
+   }
+   ```
+6. **SSL** — certificado y redirección HTTP→HTTPS con certbot (renovación automática):
+   ```bash
+   certbot --nginx -d prueba-tecnica.inufit.store --redirect
+   ```
+
+### Actualizar el despliegue
+
+```bash
+cd /var/www/decameron && git pull
+cd backend && composer install --no-dev -o && php artisan migrate --force && php artisan config:cache
+# y volver a subir el dist/ del frontend recompilado
+```
