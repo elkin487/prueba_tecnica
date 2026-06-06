@@ -1,58 +1,88 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Backend — API Hoteles Decameron (Laravel)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API RESTful que gestiona hoteles y la configuración de sus habitaciones, con las
+validaciones de negocio como fuente de verdad. Forma parte del
+[monorepo de la prueba técnica](../README.md).
 
-## About Laravel
+## 🧰 Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Laravel 13** (PHP 8.3+)
+- **PostgreSQL**
+- **PHPUnit** (pruebas) · **Laravel Pint** (estilo de código)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🏛️ Arquitectura en capas (SOLID)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Cada petición atraviesa capas con una única responsabilidad:
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```
+Ruta (routes/api.php)
+   └─► Controller      → orquesta (recibe, delega, responde). Sin lógica de negocio.
+        └─► FormRequest → valida entrada + reglas de negocio (combinación, capacidad, unicidad)
+             └─► Service     → coordina el caso de uso
+                  └─► Repository → acceso a datos (abstrae Eloquent vía interfaz)
+                       └─► Model      → entidad Eloquent
+   ◄─ API Resource    → serializa la respuesta JSON
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+- Los **servicios dependen de interfaces** de repositorio
+  (`HotelRepositoryInterface`, `HotelRoomRepositoryInterface`); el enlace con la
+  implementación Eloquent se hace en `App\Providers\RepositoryServiceProvider`.
+- La combinación válida tipo ↔ acomodación es una **regla de validación**
+  (`App\Rules\ValidAccommodationForRoomType`) que consulta el catálogo, no un `if`.
 
-## Contributing
+Diagramas en [../docs/uml](../docs/uml/).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 📂 Estructura principal
 
-## Code of Conduct
+```
+app/
+├── Http/
+│   ├── Controllers/Api/   # HotelController, HotelRoomController, catálogos
+│   ├── Requests/          # Store/Update Hotel y HotelRoom (validación)
+│   └── Resources/         # Serialización JSON
+├── Models/                # Hotel, HotelRoom, City, RoomType, Accommodation
+├── Repositories/          # Contratos + implementaciones Eloquent
+├── Rules/                 # ValidAccommodationForRoomType
+└── Services/              # HotelService, HotelRoomService
+database/
+├── migrations/            # Esquema (con UNIQUE y claves foráneas)
+└── seeders/               # Catálogos: ciudades, tipos, acomodaciones, combinaciones
+routes/api.php             # Rutas REST (prefijo /api)
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## ⚙️ Puesta en marcha
 
-## Security Vulnerabilities
+Ver la [guía completa en el README principal](../README.md#-instalación-paso-a-paso).
+Resumen:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+# configura la conexión PostgreSQL en .env
+php artisan migrate --seed
+php artisan serve            # http://127.0.0.1:8000
+```
 
-## License
+## 🔌 Endpoints
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Contrato completo (cuerpos, respuestas y códigos HTTP) en
+[../docs/api.md](../docs/api.md).
+
+- Hoteles: `GET|POST /api/hotels`, `GET|PUT|DELETE /api/hotels/{hotel}`
+- Habitaciones: `GET|POST /api/hotels/{hotel}/rooms`, `PUT|DELETE /api/hotels/{hotel}/rooms/{room}`
+- Catálogos: `GET /api/cities`, `/api/room-types`, `/api/room-types/{id}/accommodations`, `/api/accommodations`
+
+## 🧪 Pruebas y estilo
+
+```bash
+php artisan test            # PHPUnit (Unit + Feature)
+./vendor/bin/pint --test    # verificación de estilo (sin modificar)
+./vendor/bin/pint           # aplica el estilo
+```
+
+## 🔐 Variables de entorno
+
+Se documentan en `.env.example`. Las relevantes para la base de datos:
+`DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
+El archivo `.env` está fuera de Git por seguridad.

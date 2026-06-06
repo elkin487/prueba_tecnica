@@ -13,7 +13,9 @@ Thumbs.db
 Prueba Desarrollador PHP.pdf
 
 # ===== Documentación de trabajo interna (no publicar) =====
-/docs/
+# Solo el documento maestro del proceso queda fuera del repo; el resto de
+# /docs (diagramas UML, dump de la BD) sí se publica como entregable.
+/docs/MISION.md
 
 # ===== Backend (Laravel / PHP) =====
 /backend/vendor/
