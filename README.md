@@ -169,6 +169,9 @@ cd backend  && ./vendor/bin/pint --test   # estilo PHP
 cd frontend && npm run lint                # ESLint
 ```
 
+> 📋 Estrategia, cobertura y mapeo a criterios de aceptación en
+> [docs/pruebas.md](docs/pruebas.md).
+
 ---
 
 ## 📐 Reglas de negocio (resumen)

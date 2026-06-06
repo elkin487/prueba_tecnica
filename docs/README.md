@@ -19,6 +19,10 @@ consulta el [README principal](../README.md).
 
 - [Contrato de la API REST](api.md) — endpoints, cuerpos, respuestas y códigos HTTP.
 
+### Pruebas
+
+- [Estrategia y cobertura de pruebas](pruebas.md) — qué valida cada test y su mapeo a los criterios de aceptación.
+
 ### Base de datos
 
 - [Dump y restauración](database/README.md) — cómo importar `dump.sql`
